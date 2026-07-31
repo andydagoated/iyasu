@@ -4,6 +4,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Inter:wght@400;500;600&family=Newsreader:ital,wght@0,500;1,400;1,500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg:#E8E5DE; --surface:#FBFAF7; --surface-2:#F1EEE8;
@@ -61,6 +62,21 @@
     background:var(--surface-2);resize:none;overflow:hidden}
   .intention textarea:hover{border-color:var(--line)}
   .intention textarea:focus{outline:2px solid currentColor;border-color:transparent;background:#fff}
+
+  /* reflective layer: principles + questions */
+  .grp-label{font-size:11px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin:18px 0 6px}
+  .ritem{display:flex;align-items:flex-start;gap:8px;margin-bottom:1px}
+  .ritem .marker{flex:none;width:6px;height:6px;margin-top:13px;background:currentColor;transform:rotate(45deg);opacity:.8}
+  .ritem.q .marker{width:8px;height:8px;margin-top:12px;background:transparent;border:1.5px solid currentColor;border-radius:50%;transform:none}
+  .ritem textarea{flex:1;border:1px solid transparent;border-radius:7px;padding:6px 9px;font-family:var(--body);
+    font-size:14px;line-height:1.45;color:var(--ink);background:transparent;resize:none;overflow:hidden}
+  .ritem textarea:hover{background:var(--surface-2)}
+  .ritem textarea:focus{outline:2px solid currentColor;background:#fff}
+  .ritem.q textarea{font-family:var(--serif);font-style:italic;font-size:15px}
+  .ritem .icon-btn{opacity:.3;margin-top:5px}
+  .ritem:hover .icon-btn{opacity:1}
+  .radd{border:0;background:none;color:var(--muted);font-family:var(--body);font-size:13px;cursor:pointer;padding:5px 0 0 14px}
+  .radd:hover{color:var(--ink);text-decoration:underline}
 
   /* ideas */
   .idea{margin-top:16px;border-left:3px solid currentColor;padding:2px 0 2px 14px}
@@ -141,6 +157,25 @@
   footer{text-align:center;margin-top:36px;color:var(--quiet);font-size:12px}
   footer button{background:none;border:0;color:var(--quiet);text-decoration:underline;cursor:pointer;font-size:12px}
 
+  /* auth / setup gate */
+  .gate{position:fixed;inset:0;background:var(--bg);display:none;place-items:center;padding:22px;z-index:40}
+  .gate.on{display:grid}
+  .gate-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
+    padding:30px 28px;width:100%;max-width:400px;text-align:left}
+  .gate-card .kicker{margin-bottom:4px}
+  .gate-card h2{font-family:var(--disp);font-weight:800;font-size:24px;margin:0 0 6px}
+  .gate-sub{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:15px;margin:0 0 18px;line-height:1.45}
+  .gate-card input{width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 12px;font-family:var(--body);
+    font-size:15px;background:#fff;color:var(--ink);margin-bottom:10px}
+  .gate-card input:focus{outline:2px solid var(--wisdom);outline-offset:1px}
+  .btn.wide{width:100%;justify-content:center;text-align:center;padding:11px;margin-top:2px}
+  .gate-msg{font-size:13px;color:var(--muted);min-height:18px;margin:10px 0 6px}
+  .linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:13px;font-family:var(--body);padding:2px 0}
+  .linkbtn:hover{color:var(--ink)}
+  footer #sync{display:block;font-size:12px;color:var(--quiet);margin-bottom:4px}
+  footer #acct{font-size:12px;color:var(--muted)}
+  footer .foot-actions{margin-top:8px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+
   @media(max-width:760px){.shafts,.balance{grid-template-columns:repeat(2,1fr);gap:16px}h1{font-size:27px}}
   @media(prefers-reduced-motion:reduce){*{transition:none!important}.brick{animation:none!important;opacity:.9!important;transform:none!important}}
 </style>
@@ -163,9 +198,19 @@
   </div>
 
   <div class="view" id="view"></div>
-  <footer>Saves automatically on this device. &nbsp;·&nbsp; <button id="reset">Reset to a blank slate</button></footer>
+  <footer>
+    <span id="sync"></span>
+    <span id="acct"></span>
+    <div class="foot-actions">
+      <button class="linkbtn" id="export">Export backup</button>
+      <button class="linkbtn" id="importbtn">Import backup</button>
+      <input type="file" id="importfile" accept="application/json" hidden>
+      <button class="linkbtn" id="reset">Reset</button>
+    </div>
+  </footer>
 </div>
 
+<div class="gate" id="gate"></div>
 <div class="scrim" id="scrim"><div class="modal" id="modal"></div></div>
 
 <script>
@@ -189,52 +234,79 @@ function starter(){
       goals:[g("Watch a documentary on Chicago house origins",true),
         g("Build a 15-track 'roots of house' study playlist",false),
         g("Write a few sentences on each era in my notes",false)]}],
+    principles:{
+      wisdom:["Evidence over ego — change my mind when the data says so."],
+      love:["Presence over performance."],
+      service:["Leave it better than I found it, and measure whether I did."],
+      sacrifice:["If it costs me nothing, it isn't really a choice."]},
+    questions:{
+      wisdom:["Am I learning, or just consuming?"],
+      love:["Who needed me this week that I didn't show up for?"],
+      service:["Whose growth am I actually serving here — theirs, or my résumé?"],
+      sacrifice:["What am I protecting that I should be willing to give up?"]},
     weeklyNotes:"",reviewChecks:{}};
 }
 
-// storage: window.storage (Claude artifact) -> localStorage (self-hosted) -> memory
-const mem={};
-const store={
-  async get(k){
-    if(typeof window!=="undefined"&&window.storage){try{return await window.storage.get(k);}catch(e){}}
-    try{const v=localStorage.getItem(k);if(v!==null)return{value:v};}catch(e){}
-    return k in mem?{value:mem[k]}:null;
-  },
-  async set(k,v){
-    if(typeof window!=="undefined"&&window.storage){try{await window.storage.set(k,v);return;}catch(e){}}
-    try{localStorage.setItem(k,v);return;}catch(e){}
-    mem[k]=v;
-  }
-};
+// ─── Supabase config: paste your two values here (both are safe to publish) ───
+const SUPABASE_URL      = "";  // e.g. https://xxxxxxxxxxxx.supabase.co
+const SUPABASE_ANON_KEY = "";  // your anon / publishable key
+// (Or leave blank and enter them once in the app's "Connect your sync" screen.)
 
-let STATE=null, activeTab="pillars", saveTmr=null;
+let STATE=null, activeTab="pillars", saveTmr=null, cloudTmr=null;
+let sb=null, session=null;
 
-async function load(){
-  let r=await store.get(KEY);
-  if(r&&r.value){try{STATE=JSON.parse(r.value);}catch(e){STATE=starter();}}
-  else{
-    // one-time migration from the old flat model, if present
-    const old=await store.get(V1KEY);
-    if(old&&old.value){
-      try{
-        const o=JSON.parse(old.value);
-        STATE={intentions:o.intentions||baseIntentions(),ideas:[],weeklyNotes:o.weeklyNotes||"",reviewChecks:o.reviewChecks||{}};
-        ORDER.forEach(pk=>{
-          const items=(o.items||[]).filter(it=>it.pillar===pk);
-          if(!items.length)return;
-          STATE.ideas.push({id:uid(),pillar:pk,title:"Imported items",note:"",
-            goals:items.map(it=>({id:uid(),title:it.title,due:it.due||null,
-              done:it.status==="done",doneAt:it.doneAt||null,notes:it.notes||""}))});
-        });
-      }catch(e){STATE=starter();}
-    }else STATE=starter();
-    await save();
-  }
+function cfg(){
+  if(SUPABASE_URL&&SUPABASE_ANON_KEY)return{url:SUPABASE_URL,key:SUPABASE_ANON_KEY};
+  try{const c=JSON.parse(localStorage.getItem("pillars-cfg"));if(c&&c.url&&c.key)return c;}catch(e){}
+  return null;
+}
+function readLocal(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
+function cacheLocal(){try{localStorage.setItem(KEY,JSON.stringify(STATE));}catch(e){}}
+
+function normalize(){
   STATE.intentions=STATE.intentions||baseIntentions();
   STATE.ideas=STATE.ideas||[];STATE.reviewChecks=STATE.reviewChecks||{};
+  STATE.principles=STATE.principles||{};STATE.questions=STATE.questions||{};
+  ORDER.forEach(pk=>{STATE.principles[pk]=STATE.principles[pk]||[];STATE.questions[pk]=STATE.questions[pk]||[];});
 }
-async function save(){await store.set(KEY,JSON.stringify(STATE));}
+function migrateFlat(o){
+  const s={intentions:o.intentions||baseIntentions(),ideas:[],weeklyNotes:o.weeklyNotes||"",reviewChecks:o.reviewChecks||{}};
+  ORDER.forEach(pk=>{const items=(o.items||[]).filter(it=>it.pillar===pk);if(!items.length)return;
+    s.ideas.push({id:uid(),pillar:pk,title:"Imported items",note:"",
+      goals:items.map(it=>({id:uid(),title:it.title,due:it.due||null,done:it.status==="done",doneAt:it.doneAt||null,notes:it.notes||""}))});});
+  return s;
+}
+function localState(){
+  const cur=readLocal(KEY);if(cur)return cur;
+  const old=readLocal(V1KEY);if(old)return migrateFlat(old);
+  return starter();
+}
+async function cloudGet(){
+  if(!(sb&&session))return null;
+  try{const{data,error}=await sb.from("dashboards").select("data").eq("user_id",session.user.id).maybeSingle();
+    return error?null:(data?data.data:null);}catch(e){return null;}
+}
+async function cloudPush(){
+  if(!(sb&&session))return false;
+  try{const{error}=await sb.from("dashboards").upsert({user_id:session.user.id,data:STATE});
+    setSync(error?"offline":"synced");return !error;}catch(e){setSync("offline");return false;}
+}
+async function loadData(){
+  if(sb&&session){
+    const cloud=await cloudGet();
+    if(cloud&&Object.keys(cloud).length){STATE=cloud;}
+    else{STATE=localState();await cloudPush();}   // first sign-in seeds the cloud from this device
+    setSync("synced");
+  }else{STATE=localState();}
+  normalize();cacheLocal();
+}
+async function save(){
+  cacheLocal();
+  if(sb&&session){setSync("saving");clearTimeout(cloudTmr);cloudTmr=setTimeout(cloudPush,300);}
+}
 function saveSoon(){clearTimeout(saveTmr);saveTmr=setTimeout(save,350);}
+function setSync(s){const el=document.getElementById("sync");if(!el)return;
+  el.textContent={saving:"Saving…",synced:"Synced to your account ✓",offline:"Offline — saved on this device",local:"Saved on this device"}[s]||"";}
 
 // lookups
 const ideasOf=pk=>STATE.ideas.filter(i=>i.pillar===pk);
@@ -311,6 +383,18 @@ function ideaBlock(idea){
     <button class="add-goal" data-act="agoal" data-idea="${idea.id}">+ Add goal</button>
   </div>`;
 }
+function reflectSection(pk,kind){
+  const isQ=kind==="questions";
+  const label=isQ?"Questions for self":"Principles";
+  const ph=isQ?"a question worth returning to…":"a principle you hold…";
+  const noun=isQ?"question":"principle";
+  const arr=STATE[kind][pk]||[];
+  const items=arr.map((txt,idx)=>`<div class="ritem ${isQ?"q":"pr"}"><span class="marker"></span>
+    <textarea data-reflect="${kind}" data-pk="${pk}" data-idx="${idx}" rows="1" placeholder="${ph}">${esc(txt)}</textarea>
+    <button class="icon-btn" data-act="rdel" data-reflect="${kind}" data-pk="${pk}" data-idx="${idx}">✕</button></div>`).join("");
+  return `<div class="grp-label">${label}</div>${items}
+    <button class="radd" data-act="radd" data-reflect="${kind}" data-pk="${pk}">+ Add ${noun}</button>`;
+}
 function renderPillars(){
   document.getElementById("view").innerHTML=ORDER.map(pk=>{
     const p=P[pk],ideas=ideasOf(pk),built=pillarBuilt(pk),open=pillarOpen(pk);
@@ -320,12 +404,18 @@ function renderPillars(){
       <div class="pillar-h"><span class="name">${p.name}</span>
         <span class="tally">${ideas.length} idea${ideas.length===1?"":"s"} · ${built} built · ${open} to go</span></div>
       <div class="intention"><textarea data-intent="${pk}" rows="1" placeholder="What does ${p.name} mean for you right now?">${esc(STATE.intentions[pk]||"")}</textarea></div>
+      ${reflectSection(pk,"principles")}
+      ${reflectSection(pk,"questions")}
+      <div class="grp-label">Ideas</div>
       ${body}
       <button class="add-idea" data-act="aidea" data-pillar="${pk}">+ Add idea to ${p.name}</button>
     </div>`;
   }).join("");
   document.querySelectorAll("textarea[data-intent]").forEach(ta=>{autosize(ta);
     ta.addEventListener("input",()=>{autosize(ta);STATE.intentions[ta.dataset.intent]=ta.value;saveSoon();});});
+  document.querySelectorAll("textarea[data-reflect]").forEach(ta=>{autosize(ta);
+    ta.addEventListener("input",()=>{autosize(ta);const k=ta.dataset.reflect,pk=ta.dataset.pk,idx=+ta.dataset.idx;
+      if(STATE[k]&&STATE[k][pk])STATE[k][pk][idx]=ta.value;saveSoon();});});
 }
 function autosize(ta){ta.style.height="auto";ta.style.height=ta.scrollHeight+"px";}
 
@@ -473,6 +563,11 @@ document.getElementById("view").addEventListener("click",e=>{
   if(a==="eidea")return ideaModal(null,findIdea(btn.dataset.idea));
   if(a==="didea"){const i=findIdea(btn.dataset.idea);
     if(i&&confirm(`Delete "${i.title}" and its goals?`)){STATE.ideas=STATE.ideas.filter(x=>x.id!==i.id);save().then(render);}return;}
+  if(a==="radd"){const k=btn.dataset.reflect,pk=btn.dataset.pk;(STATE[k][pk]=STATE[k][pk]||[]).push("");
+    save().then(()=>{render();const list=document.querySelectorAll(`textarea[data-reflect="${k}"][data-pk="${pk}"]`);
+      const last=list[list.length-1];if(last)last.focus();});return;}
+  if(a==="rdel"){const k=btn.dataset.reflect,pk=btn.dataset.pk,idx=+btn.dataset.idx;
+    if(STATE[k]&&STATE[k][pk]){STATE[k][pk].splice(idx,1);save().then(render);}return;}
   const gid=btn.dataset.goal;if(!gid)return;
   if(a==="toggle")return toggleGoal(gid);
   if(a==="mgoal")return moveModal(gid);
@@ -483,9 +578,91 @@ document.getElementById("view").addEventListener("click",e=>{
 
 document.getElementById("reset").onclick=async()=>{
   if(confirm("Reset to a blank slate? Your ideas, goals, intentions and notes will be cleared.")){
-    STATE=starter();await save();activeTab="pillars";
+    STATE=starter();normalize();await save();activeTab="pillars";
     document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab==="pillars"));render();}
 };
 
-(async()=>{await load();render();})();
+// ---- backup: export / import ----
+function exportData(){
+  try{const blob=new Blob([JSON.stringify(STATE,null,2)],{type:"application/json"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+    a.download="four-pillars-backup-"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+  catch(e){alert("Export failed.");}
+}
+function importData(file){
+  const r=new FileReader();
+  r.onload=async()=>{try{const d=JSON.parse(r.result);if(!d||typeof d!=="object")throw 0;
+    STATE=d;normalize();await save();render();accountBar();}
+    catch(e){alert("That file couldn't be read as a Four Pillars backup.");}};
+  r.onerror=()=>alert("Couldn't read the file.");
+  r.readAsText(file);
+}
+document.getElementById("export").onclick=exportData;
+document.getElementById("importbtn").onclick=()=>document.getElementById("importfile").click();
+document.getElementById("importfile").onchange=e=>{const f=e.target.files[0];if(f)importData(f);e.target.value="";};
+
+// ---- auth / setup gate ----
+const gate=document.getElementById("gate");
+function showGate(html){gate.innerHTML=`<div class="gate-card">${html}</div>`;gate.classList.add("on");}
+function hideGate(){gate.classList.remove("on");gate.innerHTML="";}
+
+function loginScreen(){
+  showGate(`<div class="kicker">The Four Pillars</div><h2>Sign in</h2>
+    <p class="gate-sub">Enter your email and I'll send a one-tap link. No password to remember.</p>
+    <input id="g-email" type="email" placeholder="you@email.com" autocomplete="email">
+    <button class="btn primary wide" id="g-send">Email me a sign-in link</button>
+    <div class="gate-msg" id="g-msg"></div>
+    <button class="linkbtn" id="g-offline">Use this device only, without an account</button>`);
+  const email=document.getElementById("g-email");email.focus();
+  document.getElementById("g-send").onclick=async()=>{
+    const e=email.value.trim();if(!e)return email.focus();
+    document.getElementById("g-msg").textContent="Sending…";
+    try{const{error}=await sb.auth.signInWithOtp({email:e,options:{emailRedirectTo:location.origin+location.pathname}});
+      document.getElementById("g-msg").textContent=error?("Couldn't send: "+error.message)
+        :"Check your email and tap the link — you can open it right here.";}
+    catch(err){document.getElementById("g-msg").textContent="Something went wrong. Check your connection and try again.";}
+  };
+  document.getElementById("g-offline").onclick=()=>{sb=null;session=null;hideGate();startLocal();};
+}
+function setupScreen(){
+  showGate(`<div class="kicker">The Four Pillars</div><h2>Connect your sync</h2>
+    <p class="gate-sub">Paste your Supabase project URL and public (anon) key. They're stored only in this browser and only ever talk to your own Supabase.</p>
+    <input id="s-url" placeholder="https://xxxx.supabase.co">
+    <input id="s-key" placeholder="anon / publishable key">
+    <button class="btn primary wide" id="s-save">Connect</button>
+    <div class="gate-msg" id="s-msg"></div>
+    <button class="linkbtn" id="s-offline">Skip — use this device only</button>`);
+  document.getElementById("s-save").onclick=()=>{
+    const url=document.getElementById("s-url").value.trim().replace(/\/+$/,"");
+    const key=document.getElementById("s-key").value.trim();
+    if(!url||!key)return void(document.getElementById("s-msg").textContent="Both fields are required.");
+    if(!window.supabase)return void(document.getElementById("s-msg").textContent="Sync library didn't load — check your connection and reload.");
+    try{localStorage.setItem("pillars-cfg",JSON.stringify({url,key}));}catch(e){}
+    boot();
+  };
+  document.getElementById("s-offline").onclick=()=>{hideGate();startLocal();};
+}
+function accountBar(){
+  const el=document.getElementById("acct");if(!el)return;
+  if(sb&&session){el.innerHTML=`Signed in as ${esc(session.user.email||"you")} · <button class="linkbtn" id="signout">Sign out</button>`;
+    const b=document.getElementById("signout");if(b)b.onclick=()=>sb.auth.signOut();}
+  else{el.innerHTML=`Not synced · <button class="linkbtn" id="setupbtn">Set up sync</button>`;
+    const b=document.getElementById("setupbtn");if(b)b.onclick=()=>{try{localStorage.removeItem("pillars-cfg");}catch(e){}setupScreen();};}
+}
+async function startApp(){hideGate();await loadData();render();accountBar();}
+async function startLocal(){setSync("local");await loadData();render();accountBar();}
+
+async function boot(){
+  const c=cfg();
+  if(c&&window.supabase){
+    sb=window.supabase.createClient(c.url,c.key,{auth:{persistSession:true,detectSessionInUrl:true,autoRefreshToken:true}});
+    try{const{data}=await sb.auth.getSession();session=data.session||null;}catch(e){session=null;}
+    sb.auth.onAuthStateChange((_evt,s)=>{const had=!!session;session=s||null;
+      if(session&&!had)startApp();else if(!session&&had)loginScreen();});
+    if(session)startApp();else loginScreen();
+  }else if(c&&!window.supabase){setSync("offline");startLocal();}
+  else{if(window.supabase)setupScreen();else startLocal();}
+}
+boot();
 </script>
