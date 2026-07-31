@@ -1,4 +1,4 @@
-<!-- Four Pillars dashboard (self-hosted build: localStorage persistence). Wisdom, Love, Service, Sacrifice. -->
+<!-- Four Pillars dashboard: pillars -> ideas -> goals. Completed goals build the pillar. Works as a Claude artifact (window.storage) or self-hosted (localStorage). -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,7 +22,7 @@
   .wrap{max-width:1060px;margin:0 auto;padding:0 18px}
 
   header{padding:30px 0 12px}
-  .kicker{font-family:var(--body);font-size:11px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+  .kicker{font-size:11px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
   h1{font-family:var(--disp);font-weight:800;font-size:34px;letter-spacing:-.02em;margin:6px 0 4px;line-height:1.05}
   .sub{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:16px}
   .tabs{display:flex;gap:2px;margin-top:20px;background:var(--surface);border:1px solid var(--line);
@@ -31,21 +31,22 @@
     padding:8px 16px;border-radius:8px;cursor:pointer}
   .tab.active{background:var(--ink);color:#fff}
 
-  /* signature: the four columns */
+  /* colonnade — pillars built from completed goals */
   .colonnade{margin-top:20px;background:var(--surface);border:1px solid var(--line);border-radius:14px;
     box-shadow:var(--shadow);padding:20px 22px 16px}
-  .colonnade-h{font-family:var(--body);font-size:12px;color:var(--muted);margin-bottom:14px;letter-spacing:.02em}
-  .shafts{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
-  .shaft{cursor:pointer}
-  .shaft .capital{height:6px;border-radius:3px 3px 0 0;background:currentColor;opacity:.9}
-  .shaft .track{height:74px;background:var(--surface-2);border:1px solid var(--line);border-top:0;
-    position:relative;overflow:hidden}
-  .shaft .fill{position:absolute;left:0;right:0;bottom:0;background:currentColor;opacity:.85;
-    transition:height .5s cubic-bezier(.2,.7,.2,1)}
-  .shaft .base{height:8px;border-radius:0 0 4px 4px;background:currentColor;opacity:.55}
-  .shaft .p-name{font-family:var(--disp);font-weight:700;font-size:14px;margin-top:10px;color:var(--ink)}
-  .shaft .p-meta{font-size:12px;color:var(--muted);margin-top:2px}
-  .shaft .p-meta .late{color:var(--late);font-weight:600}
+  .colonnade-h{font-size:12px;color:var(--muted);margin-bottom:16px}
+  .shafts{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;align-items:end}
+  .shaft{cursor:pointer;text-align:center}
+  .stack-wrap{height:132px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+  .capital{width:64%;height:7px;border-radius:3px 3px 0 0;background:currentColor;opacity:.9;margin-bottom:3px}
+  .stack{width:46%;display:flex;flex-direction:column-reverse;gap:2px}
+  .brick{background:currentColor;border-radius:2px;opacity:.9;animation:rise .34s ease both}
+  .brick:nth-child(even){opacity:.72}
+  .plinth{width:78%;height:9px;border-radius:0 0 4px 4px;background:currentColor;opacity:.55;margin-top:3px}
+  .empty-plinth{width:46%;height:100%;border:1.5px dashed var(--line);border-radius:3px;min-height:22px}
+  .p-name{font-family:var(--disp);font-weight:700;font-size:14px;margin-top:9px;color:var(--ink)}
+  .p-meta{font-size:12px;color:var(--muted);margin-top:2px}
+  @keyframes rise{from{opacity:0;transform:translateY(7px) scaleY(.35)}to{opacity:.9;transform:none}}
 
   .view{margin-top:24px}
 
@@ -54,61 +55,62 @@
     padding:20px 22px;margin-bottom:16px;border-top:4px solid currentColor}
   .pillar-h{display:flex;align-items:center;gap:10px}
   .pillar-h .name{font-family:var(--disp);font-weight:800;font-size:20px;color:var(--ink)}
-  .pillar-h .tally{font-family:var(--body);font-size:12px;color:var(--muted);margin-left:auto}
-  .intention{margin:12px 0 4px}
-  .intention textarea{width:100%;border:1px solid transparent;border-radius:8px;padding:8px 10px;
+  .pillar-h .tally{font-size:12px;color:var(--muted);margin-left:auto}
+  .intention textarea{width:100%;border:1px solid transparent;border-radius:8px;padding:8px 10px;margin-top:10px;
     font-family:var(--serif);font-style:italic;font-size:16.5px;line-height:1.45;color:var(--ink);
     background:var(--surface-2);resize:none;overflow:hidden}
   .intention textarea:hover{border-color:var(--line)}
-  .intention textarea:focus{outline:2px solid currentColor;outline-offset:0;border-color:transparent;background:#fff}
-  .grp-label{font-family:var(--body);font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
-    color:var(--muted);margin:16px 0 8px}
+  .intention textarea:focus{outline:2px solid currentColor;border-color:transparent;background:#fff}
 
-  /* items */
-  .item{display:flex;align-items:flex-start;gap:11px;padding:9px 0;border-top:1px solid var(--line)}
-  .item:first-of-type{border-top:0}
-  .item.done{opacity:.5}
-  .check{width:19px;height:19px;border:2px solid var(--line);border-radius:6px;flex:none;margin-top:1px;
+  /* ideas */
+  .idea{margin-top:16px;border-left:3px solid currentColor;padding:2px 0 2px 14px}
+  .idea-h{display:flex;align-items:baseline;gap:8px}
+  .idea-title{font-family:var(--disp);font-weight:700;font-size:15.5px;color:var(--ink)}
+  .idea-prog{font-size:11.5px;color:var(--muted);margin-left:auto;white-space:nowrap}
+  .idea-note{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--muted);margin-top:2px}
+  .idea-actions{display:inline-flex;gap:2px;margin-left:4px}
+
+  /* goals */
+  .goal{display:flex;align-items:flex-start;gap:10px;padding:7px 0 7px 2px}
+  .goal.done{opacity:.55}
+  .check{width:18px;height:18px;border:2px solid var(--line);border-radius:6px;flex:none;margin-top:1px;
     cursor:pointer;display:grid;place-items:center;background:var(--surface-2)}
   .check.on{background:currentColor;border-color:currentColor}
   .check svg{width:11px;height:11px;stroke:#fff;stroke-width:3;fill:none;display:none}
   .check.on svg{display:block}
-  .tend{width:19px;height:19px;border-radius:50%;flex:none;margin-top:1px;cursor:pointer;
-    border:2px solid currentColor;background:transparent}
-  .tend.fresh{background:currentColor}
-  .item-body{flex:1;min-width:0}
-  .item-title{font-size:14.5px;color:var(--ink)}
-  .item.done .item-title{text-decoration:line-through}
-  .item-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:3px}
-  .status{font-family:var(--body);font-size:11px;color:var(--muted);border:1px solid var(--line);
-    padding:1px 8px;border-radius:20px;cursor:pointer;background:var(--surface-2)}
-  .status.doing{color:var(--soon);border-color:var(--soon)}
+  .goal-body{flex:1;min-width:0}
+  .goal-title{font-size:14px;color:var(--ink)}
+  .goal.done .goal-title{text-decoration:line-through}
+  .goal-meta{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:2px}
   .due{font-size:12px;color:var(--muted)}
   .due.late{color:var(--late);font-weight:600}
   .due.soon{color:var(--soon);font-weight:600}
-  .tended{font-size:12px;color:var(--quiet)}
-  .tended.stale{color:var(--soon)}
-  .i-notes{font-size:12.5px;color:var(--muted);margin-top:3px}
-  .i-actions{display:flex;gap:4px;flex:none}
-  .icon-btn{border:0;background:none;color:var(--quiet);cursor:pointer;font-size:12px;padding:4px 5px;border-radius:6px}
+  .g-notes{font-size:12px;color:var(--muted);margin-top:2px}
+  .g-actions{display:flex;gap:2px;flex:none}
+  .icon-btn{border:0;background:none;color:var(--quiet);cursor:pointer;font-size:12px;padding:3px 5px;border-radius:6px}
   .icon-btn:hover{background:var(--surface-2);color:var(--ink)}
-  .empty{color:var(--quiet);font-size:13px;font-family:var(--serif);font-style:italic;padding:4px 0 6px}
-  .add-btn{border:1px dashed var(--line);background:none;color:var(--muted);font-family:var(--body);font-size:13px;
-    padding:8px 14px;border-radius:9px;cursor:pointer;margin-top:12px}
-  .add-btn:hover{border-color:currentColor;color:var(--ink)}
+  .goal-prompt{font-family:var(--serif);font-style:italic;color:var(--soon);font-size:13.5px;margin:4px 0 2px}
+  .add-goal{border:0;background:none;color:var(--muted);font-family:var(--body);font-size:13px;cursor:pointer;padding:5px 0;margin-top:2px}
+  .add-goal:hover{color:var(--ink);text-decoration:underline}
+  .add-idea{border:1px dashed var(--line);background:none;color:var(--muted);font-family:var(--body);font-size:13px;
+    padding:8px 14px;border-radius:9px;cursor:pointer;margin-top:16px}
+  .add-idea:hover{border-color:currentColor;color:var(--ink)}
+  .empty{color:var(--quiet);font-size:13px;font-family:var(--serif);font-style:italic;padding:6px 0}
 
   /* this week */
   .section-h{display:flex;align-items:baseline;justify-content:space-between;margin:22px 0 10px}
   .section-h h2{font-family:var(--disp);font-weight:700;font-size:16px;margin:0}
   .section-h .count{font-size:12px;color:var(--muted)}
-  .wk-item{display:flex;align-items:flex-start;gap:11px;background:var(--surface);border:1px solid var(--line);
+  .wk{display:flex;align-items:flex-start;gap:11px;background:var(--surface);border:1px solid var(--line);
     border-radius:11px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow);border-left:4px solid currentColor}
+  .wk.done{opacity:.6}
   .chip{font-family:var(--disp);font-size:11px;font-weight:600;color:#fff;padding:2px 9px;border-radius:20px;background:currentColor}
+  .ctx{font-size:12px;color:var(--muted)}
 
   /* review */
   .balance{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
   .bcard{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px;box-shadow:var(--shadow);border-top:3px solid currentColor}
-  .bcard .bn{font-family:var(--disp);font-weight:700;font-size:14px}
+  .bcard .bn{font-family:var(--disp);font-weight:700;font-size:14px;color:var(--ink)}
   .bcard .bnum{font-family:var(--disp);font-weight:800;font-size:26px;margin-top:6px;color:currentColor}
   .bcard .blbl{font-size:11.5px;color:var(--muted)}
   .rcard{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:18px 20px;box-shadow:var(--shadow);margin-top:14px}
@@ -118,22 +120,19 @@
   .rcard textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:11px 12px;font-family:var(--serif);
     font-size:15px;line-height:1.5;resize:vertical;min-height:120px;background:var(--surface-2);color:var(--ink)}
   .rcard textarea:focus{outline:2px solid var(--wisdom);outline-offset:1px}
-  .saved{font-family:var(--body);font-size:11px;color:var(--quiet);height:14px;margin-top:6px}
+  .saved{font-size:11px;color:var(--quiet);height:14px;margin-top:6px}
 
   /* modal */
   .scrim{position:fixed;inset:0;background:rgba(36,30,24,.42);display:none;place-items:center;padding:18px;z-index:20}
   .scrim.on{display:grid}
   .modal{background:var(--surface);border-radius:15px;width:100%;max-width:450px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.3)}
-  .modal h3{font-family:var(--disp);margin:0 0 16px;font-size:19px}
+  .modal h3{font-family:var(--disp);margin:0 0 4px;font-size:19px}
+  .modal .msub{font-family:var(--serif);font-style:italic;color:var(--muted);font-size:14px;margin-bottom:14px}
   .field{margin-bottom:13px}
   .field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px}
   .field input,.field select{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;
     font-family:var(--body);font-size:14px;background:#fff;color:var(--ink)}
   .field input:focus,.field select:focus{outline:2px solid var(--wisdom);outline-offset:1px}
-  .seg{display:flex;gap:6px}
-  .seg button{flex:1;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);
-    font-family:var(--body);font-size:13px;padding:8px;border-radius:8px;cursor:pointer}
-  .seg button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
   .modal-actions{display:flex;gap:9px;justify-content:flex-end;margin-top:18px}
   .btn{font-family:var(--disp);font-weight:600;font-size:14px;padding:9px 18px;border-radius:9px;cursor:pointer;
     border:1px solid var(--line);background:var(--surface);color:var(--ink)}
@@ -142,11 +141,8 @@
   footer{text-align:center;margin-top:36px;color:var(--quiet);font-size:12px}
   footer button{background:none;border:0;color:var(--quiet);text-decoration:underline;cursor:pointer;font-size:12px}
 
-  @media(max-width:760px){
-    .shafts,.balance{grid-template-columns:repeat(2,1fr);gap:16px}
-    h1{font-size:27px}
-  }
-  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+  @media(max-width:760px){.shafts,.balance{grid-template-columns:repeat(2,1fr);gap:16px}h1{font-size:27px}}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}.brick{animation:none!important;opacity:.9!important;transform:none!important}}
 </style>
 
 <div class="wrap">
@@ -162,238 +158,212 @@
   </header>
 
   <div class="colonnade">
-    <div class="colonnade-h">How each pillar is being tended — recent commitments closed and practices kept. A hollow column is a quiet one.</div>
+    <div class="colonnade-h">Every goal you complete lays another brick. The pillars rise as you live them — and a bare plinth is a pillar waiting on you.</div>
     <div class="shafts" id="shafts"></div>
   </div>
 
   <div class="view" id="view"></div>
-
   <footer>Saves automatically on this device. &nbsp;·&nbsp; <button id="reset">Reset to a blank slate</button></footer>
 </div>
 
-<div class="scrim" id="scrim">
-  <div class="modal">
-    <h3 id="modal-title">Add to pillar</h3>
-    <div class="field"><label>What is it</label><input id="f-title" placeholder="e.g. Read 20 pages of the SOM reading list"></div>
-    <div class="field"><label>Pillar</label><select id="f-pillar"></select></div>
-    <div class="field"><label>Kind</label>
-      <div class="seg" id="f-kind">
-        <button data-kind="task" class="on">One-time commitment</button>
-        <button data-kind="practice">Ongoing practice</button>
-      </div>
-    </div>
-    <div class="field" id="due-field"><label>Due date (optional)</label><input id="f-due" type="date"></div>
-    <div class="field"><label>Notes (optional)</label><input id="f-notes" placeholder="context, links, reminders"></div>
-    <div class="modal-actions">
-      <button class="btn" id="m-cancel">Cancel</button>
-      <button class="btn primary" id="m-save">Save</button>
-    </div>
-  </div>
-</div>
+<div class="scrim" id="scrim"><div class="modal" id="modal"></div></div>
 
 <script>
-const KEY="pillars-dashboard-v1", WINDOW_D=14, TEND_STALE=7;
-const P={
-  wisdom:{name:"Wisdom",color:"var(--wisdom)"},
-  love:{name:"Love",color:"var(--love)"},
-  service:{name:"Service",color:"var(--service)"},
-  sacrifice:{name:"Sacrifice",color:"var(--sacrifice)"}
-};
+const KEY="pillars-dashboard-v2", V1KEY="pillars-dashboard-v1", NEXT7=7, RECENT=3;
+const P={wisdom:{name:"Wisdom",color:"var(--wisdom)"},love:{name:"Love",color:"var(--love)"},
+  service:{name:"Service",color:"var(--service)"},sacrifice:{name:"Sacrifice",color:"var(--sacrifice)"}};
 const ORDER=["wisdom","love","service","sacrifice"];
-const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random();
+const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random()+Math.random();
+
+function baseIntentions(){return{
+  wisdom:"Choose the long game. Learn deliberately, decide with evidence over ego.",
+  love:"Show up, fully present, for the people who are home.",
+  service:"Leave students and systems better than I found them.",
+  sacrifice:"Pay the near-term cost for the life that's actually worth building."};}
 
 function starter(){
-  return {
-    intentions:{
-      wisdom:"Choose the long game. Learn deliberately, decide with evidence over ego.",
-      love:"Show up, fully present, for the people who are home.",
-      service:"Leave students and systems better than I found them.",
-      sacrifice:"Pay the near-term cost for the life that's actually worth building."
-    },
-    items:[],
-    weeklyNotes:"",
-    reviewChecks:{}
-  };
+  const g=(title,done,notes="")=>({id:uid(),title,due:null,done,doneAt:done?Date.now()-2*86400000:null,notes});
+  return {intentions:baseIntentions(),
+    ideas:[{id:uid(),pillar:"wisdom",title:"Learn the history of house music",
+      note:"Where it started, and how it got to tech house.",
+      goals:[g("Watch a documentary on Chicago house origins",true),
+        g("Build a 15-track 'roots of house' study playlist",false),
+        g("Write a few sentences on each era in my notes",false)]}],
+    weeklyNotes:"",reviewChecks:{}};
 }
 
-// storage with graceful fallback
-// localStorage: persists per browser/device. Works on GitHub Pages or any static host.
+// storage: window.storage (Claude artifact) -> localStorage (self-hosted) -> memory
+const mem={};
 const store={
-  async get(k){try{const v=localStorage.getItem(k);return v===null?null:{value:v};}catch(e){return null;}},
-  async set(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+  async get(k){
+    if(typeof window!=="undefined"&&window.storage){try{return await window.storage.get(k);}catch(e){}}
+    try{const v=localStorage.getItem(k);if(v!==null)return{value:v};}catch(e){}
+    return k in mem?{value:mem[k]}:null;
+  },
+  async set(k,v){
+    if(typeof window!=="undefined"&&window.storage){try{await window.storage.set(k,v);return;}catch(e){}}
+    try{localStorage.setItem(k,v);return;}catch(e){}
+    mem[k]=v;
+  }
 };
 
-let STATE=null, activeTab="pillars", editingId=null, modalPillar="wisdom", modalKind="task";
+let STATE=null, activeTab="pillars", saveTmr=null;
 
 async function load(){
-  const r=await store.get(KEY);
+  let r=await store.get(KEY);
   if(r&&r.value){try{STATE=JSON.parse(r.value);}catch(e){STATE=starter();}}
-  else{STATE=starter();await save();}
-  if(!STATE.intentions)STATE.intentions=starter().intentions;
-  if(!STATE.reviewChecks)STATE.reviewChecks={};
+  else{
+    // one-time migration from the old flat model, if present
+    const old=await store.get(V1KEY);
+    if(old&&old.value){
+      try{
+        const o=JSON.parse(old.value);
+        STATE={intentions:o.intentions||baseIntentions(),ideas:[],weeklyNotes:o.weeklyNotes||"",reviewChecks:o.reviewChecks||{}};
+        ORDER.forEach(pk=>{
+          const items=(o.items||[]).filter(it=>it.pillar===pk);
+          if(!items.length)return;
+          STATE.ideas.push({id:uid(),pillar:pk,title:"Imported items",note:"",
+            goals:items.map(it=>({id:uid(),title:it.title,due:it.due||null,
+              done:it.status==="done",doneAt:it.doneAt||null,notes:it.notes||""}))});
+        });
+      }catch(e){STATE=starter();}
+    }else STATE=starter();
+    await save();
+  }
+  STATE.intentions=STATE.intentions||baseIntentions();
+  STATE.ideas=STATE.ideas||[];STATE.reviewChecks=STATE.reviewChecks||{};
 }
-let saveTmr;
 async function save(){await store.set(KEY,JSON.stringify(STATE));}
 function saveSoon(){clearTimeout(saveTmr);saveTmr=setTimeout(save,350);}
 
-// date helpers
+// lookups
+const ideasOf=pk=>STATE.ideas.filter(i=>i.pillar===pk);
+const findIdea=id=>STATE.ideas.find(i=>i.id===id);
+function findGoal(gid){for(const i of STATE.ideas){const g=(i.goals||[]).find(x=>x.id===gid);if(g)return{idea:i,goal:g};}return null;}
+function pillarBuilt(pk){return ideasOf(pk).reduce((n,i)=>n+(i.goals||[]).filter(g=>g.done).length,0);}
+function pillarOpen(pk){return ideasOf(pk).reduce((n,i)=>n+(i.goals||[]).filter(g=>!g.done).length,0);}
+function allGoals(){const out=[];STATE.ideas.forEach(i=>(i.goals||[]).forEach(g=>out.push({idea:i,goal:g})));return out;}
+
+// dates
 function today(){const d=new Date();d.setHours(0,0,0,0);return d;}
 function parse(s){if(!s)return null;const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d);}
-function daysBetween(a,b){return Math.round((b-a)/86400000);}
-function daysSince(ts){if(!ts)return null;return Math.floor((Date.now()-ts)/86400000);}
+function dBetween(a,b){return Math.round((b-a)/86400000);}
+function dSince(ts){if(!ts)return null;return Math.floor((Date.now()-ts)/86400000);}
 function esc(s){return(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
-function fmtDue(s){
-  if(!s)return{text:"",cls:""};
-  const diff=daysBetween(today(),parse(s));
+function fmtDue(s){if(!s)return{text:"",cls:""};
+  const diff=dBetween(today(),parse(s));
   const md=parse(s).toLocaleDateString(undefined,{month:"short",day:"numeric"});
   if(diff<0)return{text:md+" · "+(-diff)+"d late",cls:"late"};
   if(diff===0)return{text:md+" · today",cls:"late"};
   if(diff<=3)return{text:md+" · in "+diff+"d",cls:"soon"};
-  return{text:md,cls:""};
-}
+  return{text:md,cls:""};}
 
-// attention score per pillar
-function activity(pk){
-  let a=0;
-  STATE.items.forEach(it=>{
-    if(it.pillar!==pk)return;
-    if(it.type==="task"){
-      if(it.status==="doing")a+=1;
-      if(it.status==="done"){const ds=daysSince(it.doneAt);if(ds!==null&&ds<=WINDOW_D)a+=1;}
-    }else{
-      const ds=daysSince(it.lastTended);if(ds!==null&&ds<=WINDOW_D)a+=1;
-    }
-  });
-  return a;
-}
-
+// ---- colonnade ----
 function renderColonnade(){
-  const acts=ORDER.map(activity);
-  const max=Math.max(1,...acts);
-  document.getElementById("shafts").innerHTML=ORDER.map((pk,i)=>{
-    const p=P[pk], a=acts[i];
-    const frac=a>0?(0.16+0.84*(a/max)):0.05;
-    const open=STATE.items.filter(it=>it.pillar===pk&&it.type==="task"&&it.status!=="done");
-    const next=open.filter(it=>it.due).sort((x,y)=>x.due<y.due?-1:1)[0];
-    const nd=next?fmtDue(next.due):null;
-    const meta=next?`Next: <span class="${nd.cls==='late'?'late':''}">${nd.text}</span>`
-      :(open.length?`${open.length} open`:"Quiet");
+  document.getElementById("shafts").innerHTML=ORDER.map(pk=>{
+    const p=P[pk],built=pillarBuilt(pk),open=pillarOpen(pk);
+    let stackHtml;
+    if(built===0){stackHtml=`<div class="empty-plinth"></div>`;}
+    else{
+      const H=120,gap=2;
+      const bh=Math.max(3,Math.min(18,Math.floor((H-(built-1)*gap)/built)));
+      let bricks="";
+      for(let k=0;k<built;k++)bricks+=`<div class="brick" style="height:${bh}px;animation-delay:${Math.min(k*0.03,0.5)}s"></div>`;
+      stackHtml=`<div class="capital"></div><div class="stack">${bricks}</div>`;
+    }
+    const meta=built>0?`${built} built${open?` · ${open} to go`:""}`:(open?`${open} goal${open>1?"s":""} waiting`:"Nothing yet");
     return `<div class="shaft" data-pillar="${pk}" style="color:${p.color}">
-      <div class="capital"></div>
-      <div class="track"><div class="fill" style="height:${Math.round(frac*100)}%"></div></div>
-      <div class="base"></div>
+      <div class="stack-wrap">${stackHtml}</div>
+      <div class="plinth"></div>
       <div class="p-name">${p.name}</div>
       <div class="p-meta">${meta}</div>
     </div>`;
   }).join("");
 }
 
-function taskRow(it){
-  const p=P[it.pillar], d=fmtDue(it.due);
-  const stTxt=it.status==="doing"?"in progress":"to do";
-  return `<div class="item ${it.status==="done"?"done":""}" data-id="${it.id}" style="color:${p.color}">
-    <div class="check ${it.status==="done"?"on":""}" data-act="toggle"><svg viewBox="0 0 24 24"><polyline points="4,12 10,18 20,6"/></svg></div>
-    <div class="item-body">
-      <div class="item-title">${esc(it.title)}</div>
-      <div class="item-meta">
-        ${it.status!=="done"?`<span class="status ${it.status==="doing"?"doing":""}" data-act="status">${stTxt}</span>`:""}
-        ${d.text?`<span class="due ${d.cls}">${d.text}</span>`:""}
-      </div>
-      ${it.notes?`<div class="i-notes">${esc(it.notes)}</div>`:""}
+// ---- pillars view ----
+function goalRow(idea,g){
+  const d=fmtDue(g.due);
+  return `<div class="goal ${g.done?"done":""}" data-goal="${g.id}">
+    <div class="check ${g.done?"on":""}" data-act="toggle" data-goal="${g.id}"><svg viewBox="0 0 24 24"><polyline points="4,12 10,18 20,6"/></svg></div>
+    <div class="goal-body"><div class="goal-title">${esc(g.title)}</div>
+      ${(d.text||g.notes)?`<div class="goal-meta">${d.text?`<span class="due ${d.cls}">${d.text}</span>`:""}${g.notes?`<span class="g-notes">${esc(g.notes)}</span>`:""}</div>`:""}
     </div>
-    <div class="i-actions">
-      <button class="icon-btn" data-act="edit">Edit</button>
-      <button class="icon-btn" data-act="del">✕</button>
-    </div>
+    <div class="g-actions">
+      <button class="icon-btn" data-act="egoal" data-goal="${g.id}">Edit</button>
+      <button class="icon-btn" data-act="dgoal" data-goal="${g.id}">✕</button>
+    </div></div>`;
+}
+function ideaBlock(idea){
+  const goals=idea.goals||[];
+  const done=goals.filter(g=>g.done).length;
+  const rows=goals.length?goals.map(g=>goalRow(idea,g)).join("")
+    :`<div class="goal-prompt">↳ Now set the goals that get you there.</div>`;
+  return `<div class="idea" data-idea="${idea.id}">
+    <div class="idea-h"><span class="idea-title">${esc(idea.title)}</span>
+      <span class="idea-prog">${done}/${goals.length} built</span>
+      <span class="idea-actions">
+        <button class="icon-btn" data-act="eidea" data-idea="${idea.id}">Edit</button>
+        <button class="icon-btn" data-act="didea" data-idea="${idea.id}">✕</button></span></div>
+    ${idea.note?`<div class="idea-note">${esc(idea.note)}</div>`:""}
+    ${rows}
+    <button class="add-goal" data-act="agoal" data-idea="${idea.id}">+ Add goal</button>
   </div>`;
 }
-function practiceRow(it){
-  const p=P[it.pillar], ds=daysSince(it.lastTended);
-  const fresh=ds!==null&&ds<=1;
-  const stale=ds===null||ds>TEND_STALE;
-  const label=ds===null?"not tended yet":(ds===0?"tended today":`tended ${ds}d ago`);
-  return `<div class="item" data-id="${it.id}" style="color:${p.color}">
-    <div class="tend ${fresh?"fresh":""}" data-act="tend" title="Mark tended today"></div>
-    <div class="item-body">
-      <div class="item-title">${esc(it.title)}</div>
-      <div class="item-meta"><span class="tended ${stale?"stale":""}">${label}</span></div>
-      ${it.notes?`<div class="i-notes">${esc(it.notes)}</div>`:""}
-    </div>
-    <div class="i-actions">
-      <button class="icon-btn" data-act="edit">Edit</button>
-      <button class="icon-btn" data-act="del">✕</button>
-    </div>
-  </div>`;
-}
-
 function renderPillars(){
   document.getElementById("view").innerHTML=ORDER.map(pk=>{
-    const p=P[pk];
-    const tasks=STATE.items.filter(it=>it.pillar===pk&&it.type==="task")
-      .sort((a,b)=>{if((a.status==="done")!==(b.status==="done"))return a.status==="done"?1:-1;
-        if(!a.due)return 1;if(!b.due)return -1;return a.due<b.due?-1:1;});
-    const practices=STATE.items.filter(it=>it.pillar===pk&&it.type==="practice");
-    const open=tasks.filter(t=>t.status!=="done").length;
-    const prBlock=practices.length
-      ? `<div class="grp-label">Practices</div>${practices.map(practiceRow).join("")}` : "";
-    const tkBlock=tasks.length
-      ? `<div class="grp-label">Commitments</div>${tasks.map(taskRow).join("")}`
-      : (practices.length?"":`<div class="empty">Nothing under this pillar yet. What would living it look like this week?</div>`);
+    const p=P[pk],ideas=ideasOf(pk),built=pillarBuilt(pk),open=pillarOpen(pk);
+    const body=ideas.length?ideas.map(ideaBlock).join("")
+      :`<div class="empty">No ideas yet — what would living ${p.name} actually look like?</div>`;
     return `<div class="pillar" style="color:${p.color}">
       <div class="pillar-h"><span class="name">${p.name}</span>
-        <span class="tally">${open} open${practices.length?` · ${practices.length} practice${practices.length>1?"s":""}`:""}</span></div>
+        <span class="tally">${ideas.length} idea${ideas.length===1?"":"s"} · ${built} built · ${open} to go</span></div>
       <div class="intention"><textarea data-intent="${pk}" rows="1" placeholder="What does ${p.name} mean for you right now?">${esc(STATE.intentions[pk]||"")}</textarea></div>
-      ${prBlock}${tkBlock}
-      <button class="add-btn" data-add="${pk}">+ Add to ${p.name}</button>
+      ${body}
+      <button class="add-idea" data-act="aidea" data-pillar="${pk}">+ Add idea to ${p.name}</button>
     </div>`;
   }).join("");
-  document.querySelectorAll("textarea[data-intent]").forEach(autosize);
-  document.querySelectorAll("textarea[data-intent]").forEach(ta=>{
-    ta.addEventListener("input",()=>{autosize(ta);STATE.intentions[ta.dataset.intent]=ta.value;saveSoon();});
-  });
+  document.querySelectorAll("textarea[data-intent]").forEach(ta=>{autosize(ta);
+    ta.addEventListener("input",()=>{autosize(ta);STATE.intentions[ta.dataset.intent]=ta.value;saveSoon();});});
 }
 function autosize(ta){ta.style.height="auto";ta.style.height=ta.scrollHeight+"px";}
 
+// ---- this week ----
 function renderWeek(){
-  const open=STATE.items.filter(it=>it.type==="task"&&it.status!=="done");
-  const overdue=open.filter(t=>t.due&&daysBetween(today(),parse(t.due))<0).sort((a,b)=>a.due<b.due?-1:1);
-  const soon=open.filter(t=>t.due&&daysBetween(today(),parse(t.due))>=0&&daysBetween(today(),parse(t.due))<=7).sort((a,b)=>a.due<b.due?-1:1);
-  const noDate=open.filter(t=>!t.due);
-  const stale=STATE.items.filter(it=>it.type==="practice"&&(daysSince(it.lastTended)===null||daysSince(it.lastTended)>TEND_STALE));
-  const wk=it=>{const p=P[it.pillar],d=fmtDue(it.due);
-    return `<div class="wk-item" style="color:${p.color}">
-      <div class="check ${it.status==="done"?"on":""}" data-id="${it.id}" data-act="toggle"><svg viewBox="0 0 24 24"><polyline points="4,12 10,18 20,6"/></svg></div>
-      <div class="item-body"><div class="item-title">${esc(it.title)}</div>
-      <div class="item-meta"><span class="chip">${p.name}</span>${d.text?`<span class="due ${d.cls}">${d.text}</span>`:""}</div></div></div>`;};
-  const stalep=it=>{const p=P[it.pillar],ds=daysSince(it.lastTended);
-    return `<div class="wk-item" style="color:${p.color}">
-      <div class="tend" data-id="${it.id}" data-act="tend"></div>
-      <div class="item-body"><div class="item-title">${esc(it.title)}</div>
-      <div class="item-meta"><span class="chip">${p.name}</span><span class="tended stale">${ds===null?"not tended yet":ds+"d since tended"}</span></div></div></div>`;};
-  const block=(title,arr,fn,note)=>arr.length
-    ? `<div class="section-h"><h2>${title}</h2><span class="count">${arr.length}</span></div>${arr.map(fn).join("")}`
-    : (note?`<div class="section-h"><h2>${title}</h2></div><div class="empty">${note}</div>`:"");
-  let html=block("⚠ Overdue",overdue,wk,"")
-    +block("Due in the next 7 days",soon,wk,"Nothing dated this week.")
-    +block("Practices to keep up",stale,stalep,"")
-    +block("No date yet",noDate,wk,"");
-  document.getElementById("view").innerHTML=html;
+  const all=allGoals();
+  const open=all.filter(x=>!x.goal.done);
+  const overdue=open.filter(x=>x.goal.due&&dBetween(today(),parse(x.goal.due))<0).sort((a,b)=>a.goal.due<b.goal.due?-1:1);
+  const soon=open.filter(x=>x.goal.due&&dBetween(today(),parse(x.goal.due))>=0&&dBetween(today(),parse(x.goal.due))<=NEXT7).sort((a,b)=>a.goal.due<b.goal.due?-1:1);
+  const noDate=open.filter(x=>!x.goal.due);
+  const recent=all.filter(x=>x.goal.done&&dSince(x.goal.doneAt)!==null&&dSince(x.goal.doneAt)<=RECENT).sort((a,b)=>b.goal.doneAt-a.goal.doneAt);
+  const row=x=>{const p=P[x.idea.pillar],d=fmtDue(x.goal.due);
+    return `<div class="wk ${x.goal.done?"done":""}" style="color:${p.color}">
+      <div class="check ${x.goal.done?"on":""}" data-act="toggle" data-goal="${x.goal.id}"><svg viewBox="0 0 24 24"><polyline points="4,12 10,18 20,6"/></svg></div>
+      <div class="goal-body"><div class="goal-title">${esc(x.goal.title)}</div>
+        <div class="goal-meta"><span class="chip">${p.name}</span><span class="ctx">${esc(x.idea.title)}</span>${d.text?`<span class="due ${d.cls}">${d.text}</span>`:""}</div></div></div>`;};
+  const block=(t,arr,note)=>arr.length
+    ?`<div class="section-h"><h2>${t}</h2><span class="count">${arr.length}</span></div>${arr.map(row).join("")}`
+    :(note?`<div class="section-h"><h2>${t}</h2></div><div class="empty">${note}</div>`:"");
+  document.getElementById("view").innerHTML=
+    block("⚠ Overdue",overdue,"")+
+    block("Due in the next 7 days",soon,"Nothing dated this week.")+
+    block("No date yet",noDate,"")+
+    block("Recently completed",recent,"");
 }
 
-const PROMPTS=["Which pillar felt most alive this week?","Which one went quiet — and is that okay?",
-  "Did any commitment slip past its date?","What's one small act for the pillar I'm neglecting most?"];
+// ---- review ----
+const PROMPTS=["Which pillar rose the most this week?","Which one stayed a bare plinth — and is that okay?",
+  "Did any goal slip past its date?","What's one small goal for the pillar I'm neglecting most?"];
 function renderReview(){
-  const cards=ORDER.map(pk=>{const p=P[pk];const a=activity(pk);
-    const open=STATE.items.filter(it=>it.pillar===pk&&it.type==="task"&&it.status!=="done").length;
-    return `<div class="bcard" style="color:${p.color}"><div class="bn" style="color:var(--ink)">${p.name}</div>
-      <div class="bnum">${a}</div><div class="blbl">acts of tending (14d)</div>
-      <div class="blbl" style="margin-top:6px">${open} open commitment${open===1?"":"s"}</div></div>`;}).join("");
+  const cards=ORDER.map(pk=>{const p=P[pk];
+    return `<div class="bcard" style="color:${p.color}"><div class="bn">${p.name}</div>
+      <div class="bnum">${pillarBuilt(pk)}</div><div class="blbl">bricks built</div>
+      <div class="blbl" style="margin-top:6px">${pillarOpen(pk)} goal${pillarOpen(pk)===1?"":"s"} open · ${ideasOf(pk).length} idea${ideasOf(pk).length===1?"":"s"}</div></div>`;}).join("");
   const checks=PROMPTS.map((p,i)=>`<label class="prompt"><input type="checkbox" data-chk="${i}" ${STATE.reviewChecks[i]?"checked":""}> <span>${p}</span></label>`).join("");
-  document.getElementById("view").innerHTML=`
-    <div class="balance">${cards}</div>
+  document.getElementById("view").innerHTML=`<div class="balance">${cards}</div>
     <div class="rcard"><h3>Sit with it</h3>${checks}</div>
     <div class="rcard"><h3>This week, in your own words</h3>
-      <textarea id="notes" placeholder="What did you tend? What did you let go? What's next week asking of you?">${esc(STATE.weeklyNotes)}</textarea>
+      <textarea id="notes" placeholder="What did you build? What did you let go? What's next week asking of you?">${esc(STATE.weeklyNotes)}</textarea>
       <div class="saved" id="notes-saved"></div></div>`;
   const ta=document.getElementById("notes");let t;
   ta.addEventListener("input",()=>{STATE.weeklyNotes=ta.value;clearTimeout(t);
@@ -401,52 +371,64 @@ function renderReview(){
   document.querySelectorAll("[data-chk]").forEach(c=>c.addEventListener("change",()=>{STATE.reviewChecks[c.dataset.chk]=c.checked;saveSoon();}));
 }
 
-function render(){
-  renderColonnade();
-  if(activeTab==="pillars")renderPillars();
-  else if(activeTab==="week")renderWeek();
-  else renderReview();
+function render(){renderColonnade();
+  if(activeTab==="pillars")renderPillars();else if(activeTab==="week")renderWeek();else renderReview();}
+
+// ---- modals ----
+const scrim=document.getElementById("scrim"),modal=document.getElementById("modal");
+function closeModal(){scrim.classList.remove("on");modal.innerHTML="";}
+scrim.addEventListener("click",e=>{if(e.target===scrim)closeModal();});
+
+function ideaModal(pillar,idea){
+  const editing=!!idea;
+  modal.innerHTML=`<h3>${editing?"Edit idea":"New idea"}</h3>
+    <div class="msub">A direction worth pursuing under this pillar.</div>
+    <div class="field"><label>The idea</label><input id="i-title" placeholder="e.g. Learn the history of house music"></div>
+    <div class="field"><label>Pillar</label><select id="i-pillar">${ORDER.map(k=>`<option value="${k}">${P[k].name}</option>`).join("")}</select></div>
+    <div class="field"><label>A line about it (optional)</label><input id="i-note" placeholder="why it matters / what it looks like"></div>
+    <div class="modal-actions"><button class="btn" data-x="cancel">Cancel</button><button class="btn primary" data-x="save">${editing?"Save":"Create & set goals"}</button></div>`;
+  modal.querySelector("#i-title").value=editing?idea.title:"";
+  modal.querySelector("#i-pillar").value=editing?idea.pillar:pillar;
+  modal.querySelector("#i-note").value=editing&&idea.note?idea.note:"";
+  scrim.classList.add("on");modal.querySelector("#i-title").focus();
+  modal.querySelector('[data-x="cancel"]').onclick=closeModal;
+  modal.querySelector('[data-x="save"]').onclick=async()=>{
+    const title=modal.querySelector("#i-title").value.trim();if(!title){modal.querySelector("#i-title").focus();return;}
+    const pk=modal.querySelector("#i-pillar").value,note=modal.querySelector("#i-note").value.trim();
+    if(editing){idea.title=title;idea.pillar=pk;idea.note=note;await save();closeModal();render();}
+    else{const ni={id:uid(),pillar:pk,title,note,goals:[]};STATE.ideas.push(ni);await save();
+      closeModal();render();goalModal(ni.id);}   // prompt goals immediately
+  };
+}
+function goalModal(ideaId,goal){
+  const idea=findIdea(ideaId);if(!idea)return;const editing=!!goal;
+  modal.innerHTML=`<h3>${editing?"Edit goal":"New goal"}</h3>
+    <div class="msub">Toward: ${esc(idea.title)}</div>
+    <div class="field"><label>The goal</label><input id="g-title" placeholder="a concrete, finishable step"></div>
+    <div class="field"><label>Due date (optional)</label><input id="g-due" type="date"></div>
+    <div class="field"><label>Notes (optional)</label><input id="g-notes" placeholder="context, links"></div>
+    <div class="modal-actions"><button class="btn" data-x="cancel">Cancel</button>
+      <button class="btn" data-x="saveadd">Save & add another</button>
+      <button class="btn primary" data-x="save">Save</button></div>`;
+  modal.querySelector("#g-title").value=editing?goal.title:"";
+  modal.querySelector("#g-due").value=editing&&goal.due?goal.due:"";
+  modal.querySelector("#g-notes").value=editing&&goal.notes?goal.notes:"";
+  scrim.classList.add("on");modal.querySelector("#g-title").focus();
+  modal.querySelector('[data-x="cancel"]').onclick=closeModal;
+  const commit=async(again)=>{
+    const title=modal.querySelector("#g-title").value.trim();if(!title){modal.querySelector("#g-title").focus();return;}
+    const due=modal.querySelector("#g-due").value||null,notes=modal.querySelector("#g-notes").value.trim();
+    if(editing){goal.title=title;goal.due=due;goal.notes=notes;}
+    else idea.goals.push({id:uid(),title,due,notes,done:false,doneAt:null});
+    await save();
+    if(again){modal.querySelector("#g-title").value="";modal.querySelector("#g-due").value="";modal.querySelector("#g-notes").value="";modal.querySelector("#g-title").focus();render();}
+    else{closeModal();render();}
+  };
+  modal.querySelector('[data-x="save"]').onclick=()=>commit(false);
+  modal.querySelector('[data-x="saveadd"]').onclick=()=>commit(true);
 }
 
-// modal
-function setKind(k){modalKind=k;
-  document.querySelectorAll("#f-kind button").forEach(b=>b.classList.toggle("on",b.dataset.kind===k));
-  document.getElementById("due-field").style.display=k==="task"?"":"none";}
-function openModal(pillar,item){
-  editingId=item?item.id:null;
-  document.getElementById("modal-title").textContent=item?"Edit item":"Add to "+P[pillar].name;
-  const sel=document.getElementById("f-pillar");
-  sel.innerHTML=ORDER.map(k=>`<option value="${k}">${P[k].name}</option>`).join("");
-  sel.value=item?item.pillar:pillar;
-  document.getElementById("f-title").value=item?item.title:"";
-  document.getElementById("f-due").value=item&&item.due?item.due:"";
-  document.getElementById("f-notes").value=item&&item.notes?item.notes:"";
-  setKind(item?item.type:"task");
-  document.getElementById("scrim").classList.add("on");
-  document.getElementById("f-title").focus();
-}
-function closeModal(){document.getElementById("scrim").classList.remove("on");editingId=null;}
-document.getElementById("f-kind").addEventListener("click",e=>{const b=e.target.closest("button");if(b)setKind(b.dataset.kind);});
-document.getElementById("m-cancel").onclick=closeModal;
-document.getElementById("scrim").addEventListener("click",e=>{if(e.target.id==="scrim")closeModal();});
-document.getElementById("m-save").onclick=async()=>{
-  const title=document.getElementById("f-title").value.trim();
-  if(!title){document.getElementById("f-title").focus();return;}
-  const pillar=document.getElementById("f-pillar").value;
-  const notes=document.getElementById("f-notes").value.trim();
-  const due=modalKind==="task"?(document.getElementById("f-due").value||null):null;
-  if(editingId){const it=STATE.items.find(x=>x.id===editingId);
-    it.title=title;it.pillar=pillar;it.notes=notes;it.type=modalKind;
-    if(modalKind==="task"){it.due=due;if(!("status"in it))it.status="todo";}else{delete it.due;delete it.status;}
-  }else if(modalKind==="task"){
-    STATE.items.push({id:uid(),pillar,type:"task",title,due,notes,status:"todo",doneAt:null});
-  }else{
-    STATE.items.push({id:uid(),pillar,type:"practice",title,notes,lastTended:null});
-  }
-  await save();closeModal();render();
-};
-
-// tabs + delegation
+// ---- events ----
 document.getElementById("tabs").addEventListener("click",e=>{const b=e.target.closest(".tab");if(!b)return;
   activeTab=b.dataset.tab;document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===b));render();});
 document.getElementById("shafts").addEventListener("click",e=>{const s=e.target.closest(".shaft");if(!s)return;
@@ -454,25 +436,26 @@ document.getElementById("shafts").addEventListener("click",e=>{const s=e.target.
   render();const card=[...document.querySelectorAll(".pillar")][ORDER.indexOf(s.dataset.pillar)];
   if(card)card.scrollIntoView({behavior:"smooth",block:"start"});});
 
-async function act(id,a){
-  const it=STATE.items.find(x=>x.id===id);if(!it)return;
-  if(a==="toggle"){if(it.status==="done"){it.status="todo";it.doneAt=null;}else{it.status="done";it.doneAt=Date.now();}}
-  else if(a==="status"){it.status=it.status==="todo"?"doing":"todo";}
-  else if(a==="tend"){it.lastTended=Date.now();}
-  else if(a==="edit"){openModal(it.pillar,it);return;}
-  else if(a==="del"){if(!confirm("Delete this?"))return;STATE.items=STATE.items.filter(x=>x.id!==id);}
-  await save();render();
-}
+async function toggleGoal(gid){const f=findGoal(gid);if(!f)return;
+  f.goal.done=!f.goal.done;f.goal.doneAt=f.goal.done?Date.now():null;await save();render();}
+
 document.getElementById("view").addEventListener("click",e=>{
-  const add=e.target.closest("[data-add]");if(add){openModal(add.dataset.add);return;}
   const btn=e.target.closest("[data-act]");if(!btn)return;
-  const host=btn.closest("[data-id]")||btn.closest(".item")||btn.closest(".wk-item");
-  const id=(btn.dataset.id)||(host&&host.dataset.id);
-  if(id)act(id,btn.dataset.act);
+  const a=btn.dataset.act;
+  if(a==="aidea")return ideaModal(btn.dataset.pillar);
+  if(a==="agoal")return goalModal(btn.dataset.idea);
+  if(a==="eidea")return ideaModal(null,findIdea(btn.dataset.idea));
+  if(a==="didea"){const i=findIdea(btn.dataset.idea);
+    if(i&&confirm(`Delete "${i.title}" and its goals?`)){STATE.ideas=STATE.ideas.filter(x=>x.id!==i.id);save().then(render);}return;}
+  const gid=btn.dataset.goal;if(!gid)return;
+  if(a==="toggle")return toggleGoal(gid);
+  const f=findGoal(gid);if(!f)return;
+  if(a==="egoal")return goalModal(f.idea.id,f.goal);
+  if(a==="dgoal"){if(confirm("Delete this goal?")){f.idea.goals=f.idea.goals.filter(x=>x.id!==gid);save().then(render);}}
 });
 
 document.getElementById("reset").onclick=async()=>{
-  if(confirm("Reset to a blank slate? Your intentions, commitments and notes will be cleared.")){
+  if(confirm("Reset to a blank slate? Your ideas, goals, intentions and notes will be cleared.")){
     STATE=starter();await save();activeTab="pillars";
     document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab==="pillars"));render();}
 };
