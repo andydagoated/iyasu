@@ -290,6 +290,7 @@ function goalRow(idea,g){
       ${(d.text||g.notes)?`<div class="goal-meta">${d.text?`<span class="due ${d.cls}">${d.text}</span>`:""}${g.notes?`<span class="g-notes">${esc(g.notes)}</span>`:""}</div>`:""}
     </div>
     <div class="g-actions">
+      <button class="icon-btn" data-act="mgoal" data-goal="${g.id}">Move</button>
       <button class="icon-btn" data-act="egoal" data-goal="${g.id}">Edit</button>
       <button class="icon-btn" data-act="dgoal" data-goal="${g.id}">✕</button>
     </div></div>`;
@@ -427,6 +428,31 @@ function goalModal(ideaId,goal){
   modal.querySelector('[data-x="save"]').onclick=()=>commit(false);
   modal.querySelector('[data-x="saveadd"]').onclick=()=>commit(true);
 }
+function moveModal(gid){
+  const f=findGoal(gid);if(!f)return;const cur=f.idea;
+  const opts=ORDER.map(pk=>{
+    const inner=ideasOf(pk).map(i=>`<option value="${i.id}"${i.id===cur.id?" disabled":""}>${esc(i.title)}${i.id===cur.id?" — current":""}</option>`).join("")
+      +`<option value="new:${pk}">＋ New idea in ${P[pk].name}</option>`;
+    return `<optgroup label="${P[pk].name}">${inner}</optgroup>`;
+  }).join("");
+  modal.innerHTML=`<h3>Move goal</h3>
+    <div class="msub">Now in ${P[cur.pillar].name} › ${esc(cur.title)}</div>
+    <div class="field"><label>${esc(f.goal.title)}</label><select id="mv-dest">${opts}</select></div>
+    <div class="modal-actions"><button class="btn" data-x="cancel">Cancel</button><button class="btn primary" data-x="save">Move goal</button></div>`;
+  scrim.classList.add("on");
+  modal.querySelector('[data-x="cancel"]').onclick=closeModal;
+  modal.querySelector('[data-x="save"]').onclick=async()=>{
+    const val=modal.querySelector("#mv-dest").value;let dest;
+    if(val.indexOf("new:")===0){const pk=val.slice(4);
+      dest=ideasOf(pk).find(i=>i.title==="Moved goals");
+      if(!dest){dest={id:uid(),pillar:pk,title:"Moved goals",note:"",goals:[]};STATE.ideas.push(dest);}}
+    else dest=findIdea(val);
+    if(!dest||dest.id===cur.id){closeModal();return;}
+    cur.goals=cur.goals.filter(x=>x.id!==gid);
+    dest.goals.push(f.goal);
+    await save();closeModal();render();
+  };
+}
 
 // ---- events ----
 document.getElementById("tabs").addEventListener("click",e=>{const b=e.target.closest(".tab");if(!b)return;
@@ -449,6 +475,7 @@ document.getElementById("view").addEventListener("click",e=>{
     if(i&&confirm(`Delete "${i.title}" and its goals?`)){STATE.ideas=STATE.ideas.filter(x=>x.id!==i.id);save().then(render);}return;}
   const gid=btn.dataset.goal;if(!gid)return;
   if(a==="toggle")return toggleGoal(gid);
+  if(a==="mgoal")return moveModal(gid);
   const f=findGoal(gid);if(!f)return;
   if(a==="egoal")return goalModal(f.idea.id,f.goal);
   if(a==="dgoal"){if(confirm("Delete this goal?")){f.idea.goals=f.idea.goals.filter(x=>x.id!==gid);save().then(render);}}
