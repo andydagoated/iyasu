@@ -404,14 +404,14 @@ function reflectSection(pk,kind){
       return `<div class="qitem">
         <div class="ritem q"><span class="marker"></span>
           <textarea data-reflect="questions" data-pk="${pk}" data-idx="${idx}" data-part="q" rows="1" placeholder="a question worth returning to…">${esc(q)}</textarea>
-          <button class="icon-btn" data-act="rdel" data-reflect="questions" data-pk="${pk}" data-idx="${idx}">✕</button></div>
+          <button class="icon-btn" tabindex="-1" data-act="rdel" data-reflect="questions" data-pk="${pk}" data-idx="${idx}">✕</button></div>
         <textarea class="qreply" data-reflect="questions" data-pk="${pk}" data-idx="${idx}" data-part="a" rows="1" placeholder="your reply…">${esc(a)}</textarea>
       </div>`;
     }).join("");
   }else{
     items=arr.map((txt,idx)=>`<div class="ritem pr"><span class="marker"></span>
       <textarea data-reflect="principles" data-pk="${pk}" data-idx="${idx}" rows="1" placeholder="a principle you hold…">${esc(txt)}</textarea>
-      <button class="icon-btn" data-act="rdel" data-reflect="principles" data-pk="${pk}" data-idx="${idx}">✕</button></div>`).join("");
+      <button class="icon-btn" tabindex="-1" data-act="rdel" data-reflect="principles" data-pk="${pk}" data-idx="${idx}">✕</button></div>`).join("");
   }
   return `<div class="grp-label">${label}</div>${items}
     <button class="radd" data-act="radd" data-reflect="${kind}" data-pk="${pk}">+ Add ${noun}</button>`;
@@ -629,6 +629,19 @@ function importData(file){
 document.getElementById("export").onclick=exportData;
 document.getElementById("importbtn").onclick=()=>document.getElementById("importfile").click();
 document.getElementById("importfile").onchange=e=>{const f=e.target.files[0];if(f)importData(f);e.target.value="";};
+
+// ---- keyboard: Enter submits dialogs / advances list prompts (Shift+Enter = newline) ----
+document.addEventListener("keydown",e=>{
+  if(e.key!=="Enter"||e.isComposing||e.shiftKey)return;
+  const t=e.target;
+  const dlg=t.closest&&t.closest("#modal, .gate-card");
+  if(dlg&&t.tagName==="INPUT"){e.preventDefault();const pb=dlg.querySelector(".btn.primary");if(pb)pb.click();return;}
+  if(t.tagName==="TEXTAREA"&&t.dataset.reflect&&t.dataset.part!=="a"){
+    e.preventDefault();
+    if(t.value.trim()){const add=document.querySelector(`[data-act="radd"][data-reflect="${t.dataset.reflect}"][data-pk="${t.dataset.pk}"]`);if(add)add.click();}
+    else t.blur();
+  }
+});
 
 // ---- auth / setup gate ----
 const gate=document.getElementById("gate");
