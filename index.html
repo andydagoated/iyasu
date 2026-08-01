@@ -77,6 +77,12 @@
   .ritem:hover .icon-btn{opacity:1}
   .radd{border:0;background:none;color:var(--muted);font-family:var(--body);font-size:13px;cursor:pointer;padding:5px 0 0 14px}
   .radd:hover{color:var(--ink);text-decoration:underline}
+  .qitem{margin-bottom:7px}
+  .qreply{display:block;width:calc(100% - 14px);margin:1px 0 0 14px;border:1px solid transparent;border-radius:7px;
+    padding:6px 9px;font-family:var(--body);font-size:13.5px;line-height:1.45;color:var(--muted);background:transparent;resize:none;overflow:hidden}
+  .qreply:hover{background:var(--surface-2)}
+  .qreply:focus{outline:2px solid currentColor;background:#fff;color:var(--ink)}
+  .qreply::placeholder{font-style:italic}
 
   /* ideas */
   .idea{margin-top:16px;border-left:3px solid currentColor;padding:2px 0 2px 14px}
@@ -267,7 +273,10 @@ function normalize(){
   STATE.intentions=STATE.intentions||baseIntentions();
   STATE.ideas=STATE.ideas||[];STATE.reviewChecks=STATE.reviewChecks||{};
   STATE.principles=STATE.principles||{};STATE.questions=STATE.questions||{};
-  ORDER.forEach(pk=>{STATE.principles[pk]=STATE.principles[pk]||[];STATE.questions[pk]=STATE.questions[pk]||[];});
+  ORDER.forEach(pk=>{
+    STATE.principles[pk]=STATE.principles[pk]||[];
+    STATE.questions[pk]=(STATE.questions[pk]||[]).map(x=>typeof x==="string"?{q:x,a:""}:{q:(x&&x.q)||"",a:(x&&x.a)||""});
+  });
 }
 function migrateFlat(o){
   const s={intentions:o.intentions||baseIntentions(),ideas:[],weeklyNotes:o.weeklyNotes||"",reviewChecks:o.reviewChecks||{}};
@@ -386,12 +395,24 @@ function ideaBlock(idea){
 function reflectSection(pk,kind){
   const isQ=kind==="questions";
   const label=isQ?"Questions for self":"Principles";
-  const ph=isQ?"a question worth returning to…":"a principle you hold…";
   const noun=isQ?"question":"principle";
   const arr=STATE[kind][pk]||[];
-  const items=arr.map((txt,idx)=>`<div class="ritem ${isQ?"q":"pr"}"><span class="marker"></span>
-    <textarea data-reflect="${kind}" data-pk="${pk}" data-idx="${idx}" rows="1" placeholder="${ph}">${esc(txt)}</textarea>
-    <button class="icon-btn" data-act="rdel" data-reflect="${kind}" data-pk="${pk}" data-idx="${idx}">✕</button></div>`).join("");
+  let items;
+  if(isQ){
+    items=arr.map((it,idx)=>{
+      const q=(it&&it.q!=null)?it.q:"";const a=(it&&it.a!=null)?it.a:"";
+      return `<div class="qitem">
+        <div class="ritem q"><span class="marker"></span>
+          <textarea data-reflect="questions" data-pk="${pk}" data-idx="${idx}" data-part="q" rows="1" placeholder="a question worth returning to…">${esc(q)}</textarea>
+          <button class="icon-btn" data-act="rdel" data-reflect="questions" data-pk="${pk}" data-idx="${idx}">✕</button></div>
+        <textarea class="qreply" data-reflect="questions" data-pk="${pk}" data-idx="${idx}" data-part="a" rows="1" placeholder="your reply…">${esc(a)}</textarea>
+      </div>`;
+    }).join("");
+  }else{
+    items=arr.map((txt,idx)=>`<div class="ritem pr"><span class="marker"></span>
+      <textarea data-reflect="principles" data-pk="${pk}" data-idx="${idx}" rows="1" placeholder="a principle you hold…">${esc(txt)}</textarea>
+      <button class="icon-btn" data-act="rdel" data-reflect="principles" data-pk="${pk}" data-idx="${idx}">✕</button></div>`).join("");
+  }
   return `<div class="grp-label">${label}</div>${items}
     <button class="radd" data-act="radd" data-reflect="${kind}" data-pk="${pk}">+ Add ${noun}</button>`;
 }
@@ -414,8 +435,14 @@ function renderPillars(){
   document.querySelectorAll("textarea[data-intent]").forEach(ta=>{autosize(ta);
     ta.addEventListener("input",()=>{autosize(ta);STATE.intentions[ta.dataset.intent]=ta.value;saveSoon();});});
   document.querySelectorAll("textarea[data-reflect]").forEach(ta=>{autosize(ta);
-    ta.addEventListener("input",()=>{autosize(ta);const k=ta.dataset.reflect,pk=ta.dataset.pk,idx=+ta.dataset.idx;
-      if(STATE[k]&&STATE[k][pk])STATE[k][pk][idx]=ta.value;saveSoon();});});
+    ta.addEventListener("input",()=>{autosize(ta);
+      const k=ta.dataset.reflect,pk=ta.dataset.pk,idx=+ta.dataset.idx,part=ta.dataset.part;
+      if(!(STATE[k]&&STATE[k][pk]))return;
+      if(k==="questions"){let it=STATE.questions[pk][idx];
+        if(typeof it==="string")it=STATE.questions[pk][idx]={q:it,a:""};
+        if(part==="a")it.a=ta.value;else it.q=ta.value;}
+      else STATE[k][pk][idx]=ta.value;
+      saveSoon();});});
 }
 function autosize(ta){ta.style.height="auto";ta.style.height=ta.scrollHeight+"px";}
 
@@ -563,9 +590,10 @@ document.getElementById("view").addEventListener("click",e=>{
   if(a==="eidea")return ideaModal(null,findIdea(btn.dataset.idea));
   if(a==="didea"){const i=findIdea(btn.dataset.idea);
     if(i&&confirm(`Delete "${i.title}" and its goals?`)){STATE.ideas=STATE.ideas.filter(x=>x.id!==i.id);save().then(render);}return;}
-  if(a==="radd"){const k=btn.dataset.reflect,pk=btn.dataset.pk;(STATE[k][pk]=STATE[k][pk]||[]).push("");
-    save().then(()=>{render();const list=document.querySelectorAll(`textarea[data-reflect="${k}"][data-pk="${pk}"]`);
-      const last=list[list.length-1];if(last)last.focus();});return;}
+  if(a==="radd"){const k=btn.dataset.reflect,pk=btn.dataset.pk;STATE[k][pk]=STATE[k][pk]||[];
+    STATE[k][pk].push(k==="questions"?{q:"",a:""}:"");
+    save().then(()=>{render();const sel=k==="questions"?`textarea[data-reflect="questions"][data-pk="${pk}"][data-part="q"]`:`textarea[data-reflect="${k}"][data-pk="${pk}"]`;
+      const list=document.querySelectorAll(sel);const last=list[list.length-1];if(last)last.focus();});return;}
   if(a==="rdel"){const k=btn.dataset.reflect,pk=btn.dataset.pk,idx=+btn.dataset.idx;
     if(STATE[k]&&STATE[k][pk]){STATE[k][pk].splice(idx,1);save().then(render);}return;}
   const gid=btn.dataset.goal;if(!gid)return;
